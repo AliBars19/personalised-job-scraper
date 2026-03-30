@@ -41,3 +41,8 @@ htmlcov/
 .coverage
 coverage/
 *.lcov
+
+# Build artifacts
+*.tsbuildinfo
+*.stackdump
+.pytest_cache/
