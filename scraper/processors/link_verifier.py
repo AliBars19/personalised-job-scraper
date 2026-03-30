@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -86,8 +87,6 @@ async def _check_url(
 
 
 def urlparse_base(url: str) -> str:
-    from urllib.parse import urlparse
-
     parsed = urlparse(url)
     return f"{parsed.scheme}://{parsed.netloc}"
 

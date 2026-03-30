@@ -68,11 +68,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (session.lastFillResults) {
     const r = session.lastFillResults;
     resultsSection.style.display = "block";
-    resultsContent.innerHTML = `
-      <div class="result-row"><span class="dot green"></span> ${r.filled} field(s) auto-filled</div>
-      ${r.unmapped > 0 ? `<div class="result-row"><span class="dot yellow"></span> ${r.unmapped} field(s) unmapped</div>` : ""}
-      ${r.fileUploads > 0 ? `<div class="result-row"><span class="dot" style="background:#3b82f6"></span> ${r.fileUploads} file upload(s) — attach manually</div>` : ""}
-    `;
+    resultsContent.textContent = "";
+
+    const addRow = (dotColor, text) => {
+      const row = document.createElement("div");
+      row.className = "result-row";
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      dot.classList.add(dotColor);
+      row.appendChild(dot);
+      row.appendChild(document.createTextNode(` ${text}`));
+      resultsContent.appendChild(row);
+    };
+
+    addRow("green", `${Number(r.filled)} field(s) auto-filled`);
+    if (r.unmapped > 0) addRow("yellow", `${Number(r.unmapped)} field(s) unmapped`);
+    if (r.fileUploads > 0) addRow("yellow", `${Number(r.fileUploads)} file upload(s) — attach manually`);
   }
 
   // Save config

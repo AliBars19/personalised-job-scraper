@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase";
 import { StatusSelector } from "@/components/StatusSelector";
@@ -42,9 +42,11 @@ export function JobDetail({ job, application }: JobDetailProps) {
     applicationStatuses[job.id] ?? application?.status ?? "new";
 
   // Initialize store with server data
-  if (application?.status && !applicationStatuses[job.id]) {
-    setApplicationStatus(job.id, application.status as ApplicationStatus);
-  }
+  useEffect(() => {
+    if (application?.status && !applicationStatuses[job.id]) {
+      setApplicationStatus(job.id, application.status as ApplicationStatus);
+    }
+  }, [application, job.id, applicationStatuses, setApplicationStatus]);
 
   async function saveNotes() {
     setSavingNotes(true);
