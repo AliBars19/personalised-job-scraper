@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { safeUrl } from "@/lib/url";
 import { StatusSelector } from "./StatusSelector";
 import type { ApplicationStatus, Job } from "@/lib/types";
 
@@ -94,7 +95,7 @@ export function JobCard({ job, status, index }: JobCardProps) {
         <StatusSelector jobId={job.id} currentStatus={status} />
 
         <a
-          href={job.application_url || job.source_url}
+          href={safeUrl(job.application_url || job.source_url)}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => markSeen(job.id)}

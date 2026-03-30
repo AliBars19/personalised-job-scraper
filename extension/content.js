@@ -11,8 +11,10 @@
 (async function () {
   "use strict";
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const url = new URL(window.location.href);
-  const jobId = url.searchParams.get("corkboard_job_id");
+  const rawJobId = url.searchParams.get("corkboard_job_id");
+  const jobId = rawJobId && UUID_RE.test(rawJobId) ? rawJobId : null;
   const domain = window.location.hostname;
 
   // Only activate if triggered from CorkBoard dashboard

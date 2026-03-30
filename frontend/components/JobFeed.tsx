@@ -9,13 +9,11 @@ import type { ApplicationStatus, Job, JobFilters } from "@/lib/types";
 
 const PAGE_SIZE = 20;
 
-function escapePostgrestSearch(input: string): string {
-  // Escape PostgREST ilike wildcards and filter-syntax chars
+function escapeIlike(input: string): string {
   return input
     .replace(/\\/g, "\\\\")
     .replace(/%/g, "\\%")
-    .replace(/_/g, "\\_")
-    .replace(/[,.()"']/g, "");
+    .replace(/_/g, "\\_");
 }
 
 function buildQuery(supabase: ReturnType<typeof createClient>, filters: JobFilters) {
@@ -43,10 +41,8 @@ function buildQuery(supabase: ReturnType<typeof createClient>, filters: JobFilte
   }
 
   if (filters.search) {
-    const safe = escapePostgrestSearch(filters.search);
-    query = query.or(
-      `title.ilike.%${safe}%,company.ilike.%${safe}%`,
-    );
+    const pattern = `%${escapeIlike(filters.search)}%`;
+    query = query.or(`title.ilike.${pattern},company.ilike.${pattern}`);
   }
 
   if (filters.sortBy === "recent") {

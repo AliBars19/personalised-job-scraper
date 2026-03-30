@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase";
+import { safeUrl } from "@/lib/url";
 import { StatusSelector } from "@/components/StatusSelector";
 import { useAppStore } from "@/lib/store";
 import type { Application, ApplicationStatus, Job } from "@/lib/types";
@@ -113,7 +114,7 @@ export function JobDetail({ job, application }: JobDetailProps) {
 
         <div className="mt-4">
           <a
-            href={job.application_url || job.source_url}
+            href={safeUrl(job.application_url || job.source_url)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-700"
@@ -121,7 +122,7 @@ export function JobDetail({ job, application }: JobDetailProps) {
             Apply Now
           </a>
           <a
-            href={job.source_url}
+            href={safeUrl(job.source_url)}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-3 inline-block rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-50"

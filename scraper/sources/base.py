@@ -55,23 +55,32 @@ class ScrapedJob:
     def to_db_row(self) -> dict[str, Any]:
         return {
             "source": self.source,
-            "source_url": self.source_url,
+            "source_url": _safe_http_url(self.source_url),
             "title": self.title,
             "company": self.company,
             "location": self.location,
             "salary_text": self.salary_text,
             "salary_min": self.salary_min,
             "salary_max": self.salary_max,
-            "description": self.description,
+            "description": (self.description or "")[:10_000],
             "posted_date": self.posted_date,
             "scraped_at": datetime.now(timezone.utc).isoformat(),
             "category": self.category,
-            "application_url": self.application_url,
+            "application_url": _safe_http_url(self.application_url),
             "application_type": self.application_type,
             "application_domain": self.application_domain,
             "is_active": True,
             "last_verified": datetime.now(timezone.utc).isoformat(),
         }
+
+
+def _safe_http_url(url: str | None) -> str | None:
+    """Only allow http/https URLs to be stored."""
+    if not url:
+        return None
+    if url.startswith(("http://", "https://")):
+        return url
+    return None
 
 
 @dataclass

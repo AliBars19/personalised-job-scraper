@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import logging
 from typing import Any
 from urllib.parse import urlparse
@@ -33,6 +34,28 @@ GENERIC_EXPIRED_PATTERNS: list[str] = [
 ]
 
 MAX_RETRIES = 3
+ALLOWED_SCHEMES = {"http", "https"}
+BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "169.254.169.254"}
+
+
+def _is_safe_url(url: str) -> bool:
+    """Block SSRF: reject private IPs, loopback, link-local, and non-http schemes."""
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ALLOWED_SCHEMES:
+            return False
+        host = parsed.hostname or ""
+        if host in BLOCKED_HOSTS:
+            return False
+        try:
+            addr = ipaddress.ip_address(host)
+            if addr.is_private or addr.is_loopback or addr.is_link_local:
+                return False
+        except ValueError:
+            pass  # Hostname, not an IP — OK
+        return True
+    except Exception:
+        return False
 
 
 async def _check_url(
@@ -41,6 +64,10 @@ async def _check_url(
     client: httpx.AsyncClient,
 ) -> bool:
     """Return True if the URL appears to still be an active listing."""
+    if not _is_safe_url(url):
+        logger.warning("Blocked unsafe URL: %s", url)
+        return False
+
     for attempt in range(MAX_RETRIES):
         try:
             resp = await client.head(url, follow_redirects=True, timeout=15.0)
