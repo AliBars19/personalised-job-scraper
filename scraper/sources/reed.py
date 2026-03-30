@@ -27,18 +27,18 @@ class ReedScraper(BaseScraper):
         for page in range(1, MAX_PAGES_PER_QUERY + 1):
             url = (
                 f"{BASE_URL}/jobs/{quote_plus(query.replace(' ', '-'))}"
-                f"-in-london?pageno={page}"
+                f"-jobs-in-london?pageno={page}"
             )
 
             try:
-                resp = await client.get(url, headers=self._random_headers())
+                resp = await client.get(url, headers=self._random_headers(), timeout=30.0)
                 resp.raise_for_status()
-            except httpx.HTTPStatusError as exc:
-                logger.warning("Reed page %d returned %d", page, exc.response.status_code)
+            except (httpx.HTTPStatusError, httpx.TimeoutException) as exc:
+                logger.warning("Reed page %d error: %s", page, exc)
                 break
 
             soup = BeautifulSoup(resp.text, "lxml")
-            cards = soup.select('article.job-result-card, div[data-qa="job-card"]')
+            cards = soup.select("article")
 
             if not cards:
                 break
@@ -56,7 +56,7 @@ class ReedScraper(BaseScraper):
         return jobs
 
     def _parse_card(self, card: BeautifulSoup, category: str) -> ScrapedJob | None:
-        title_el = card.select_one('h2 a, a.job-result-card__header-title')
+        title_el = card.select_one("h2 a, a[class*=jobTitle]")
         if not title_el:
             return None
 
@@ -66,29 +66,33 @@ class ReedScraper(BaseScraper):
         if not job_url:
             return None
 
-        company_el = card.select_one(
-            'a.job-result-card__posted-by, '
-            'div[data-qa="job-card-company"]'
-        )
+        company_el = card.select_one("a.gtmJobListingPostedBy, a[class*=profileUrl]")
         company = company_el.get_text(strip=True) if company_el else "Unknown"
 
-        location_el = card.select_one(
-            'span.job-result-card__location, '
-            'div[data-qa="job-card-location"]'
-        )
-        location = location_el.get_text(strip=True) if location_el else ""
+        # Reed uses <li> items inside a <ul> for metadata: salary, location, type
+        metadata_items = card.select("li.list-group-item, li[class*=jobMetadata__item]")
+        salary_text = None
+        location = ""
 
-        salary_el = card.select_one(
-            'span.job-result-card__salary, '
-            'div[data-qa="job-card-salary"]'
-        )
-        salary_text = salary_el.get_text(strip=True) if salary_el else None
+        for item in metadata_items:
+            text = item.get_text(strip=True)
+            if not text:
+                continue
+            # Salary indicators
+            if any(kw in text.lower() for kw in ("£", "salary", "competitive", "per annum", "per hour")):
+                salary_text = text
+            # Location — contains London or known area names
+            elif any(kw in text.lower() for kw in ("london", "ec", "wc", "sw", "se", "nw")):
+                location = text
+            # If no salary or location yet, first item is often salary, second is location
+            elif salary_text is None and not text.lower().startswith(("full", "part", "temp", "perm", "contract")):
+                salary_text = text
+            elif not location and not text.lower().startswith(("full", "part", "temp", "perm", "contract")):
+                location = text
 
-        desc_el = card.select_one(
-            'p.job-result-card__description, '
-            'div[data-qa="job-card-description"]'
-        )
-        description = desc_el.get_text(strip=True) if desc_el else ""
+        # Easy apply detection
+        easy_apply_el = card.select_one("[class*=easyApply], button[class*=easyApply]")
+        app_type = "easy_apply" if easy_apply_el else "external"
 
         return ScrapedJob(
             source=self.source_name,
@@ -97,8 +101,7 @@ class ReedScraper(BaseScraper):
             company=company,
             location=location,
             salary_text=salary_text,
-            description=description,
             category=category,
             application_url=job_url,
-            application_type="external",
+            application_type=app_type,
         )
