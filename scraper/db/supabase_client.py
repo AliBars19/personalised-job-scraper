@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
@@ -41,7 +41,10 @@ class SupabaseClient:
     def get_active_jobs(self, limit: int = 500, offset: int = 0) -> list[dict[str, Any]]:
         result = (
             self._client.table("jobs")
-            .select("id, source_url, application_url, source")
+            .select(
+                "id, source_url, application_url, source, "
+                "title, company, location, salary_text, description, category"
+            )
             .eq("is_active", True)
             .is_("duplicate_of", "null")
             .range(offset, offset + limit - 1)
@@ -61,7 +64,7 @@ class SupabaseClient:
 
     def archive_old_inactive(self, days: int = 14) -> int:
         """Soft-archive jobs inactive for N+ days by keeping is_active=false."""
-        cutoff = datetime.now(timezone.utc).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = (
             self._client.table("jobs")
             .select("id")
@@ -71,9 +74,8 @@ class SupabaseClient:
         )
         return len(result.data)
 
-    def get_jobs_for_dedup(
-        self, title: str, company: str, location: str
-    ) -> list[dict[str, Any]]:
+    def get_all_active_for_dedup(self) -> list[dict[str, Any]]:
+        """Fetch all active non-duplicate jobs for deduplication (single query)."""
         result = (
             self._client.table("jobs")
             .select("id, title, company, location, description, salary_text")

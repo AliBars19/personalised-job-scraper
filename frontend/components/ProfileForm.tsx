@@ -31,7 +31,7 @@ export function ProfileForm() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    async function fetch() {
+    async function loadProfile() {
       const supabase = createClient();
       const { data } = await supabase
         .from("user_profile")
@@ -44,7 +44,7 @@ export function ProfileForm() {
       }
       setLoading(false);
     }
-    fetch();
+    loadProfile();
   }, []);
 
   async function handleSave() {

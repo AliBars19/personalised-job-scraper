@@ -9,6 +9,15 @@ import type { ApplicationStatus, Job, JobFilters } from "@/lib/types";
 
 const PAGE_SIZE = 20;
 
+function escapePostgrestSearch(input: string): string {
+  // Escape PostgREST ilike wildcards and filter-syntax chars
+  return input
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+    .replace(/[,.()"']/g, "");
+}
+
 function buildQuery(supabase: ReturnType<typeof createClient>, filters: JobFilters) {
   let query = supabase
     .from("jobs")
@@ -34,8 +43,9 @@ function buildQuery(supabase: ReturnType<typeof createClient>, filters: JobFilte
   }
 
   if (filters.search) {
+    const safe = escapePostgrestSearch(filters.search);
     query = query.or(
-      `title.ilike.%${filters.search}%,company.ilike.%${filters.search}%`,
+      `title.ilike.%${safe}%,company.ilike.%${safe}%`,
     );
   }
 
@@ -105,19 +115,30 @@ export function JobFeed() {
   useEffect(() => {
     if (jobs.length === 0) return;
 
-    const supabase = createClient();
-    const jobIds = jobs.map((j) => j.id);
+    async function loadStatuses() {
+      try {
+        const supabase = createClient();
+        const jobIds = jobs.map((j) => j.id);
 
-    supabase
-      .from("applications")
-      .select("job_id, status")
-      .in("job_id", jobIds)
-      .then(({ data }) => {
+        const { data, error } = await supabase
+          .from("applications")
+          .select("job_id, status")
+          .in("job_id", jobIds);
+
+        if (error) {
+          console.error("Failed to fetch application statuses:", error);
+          return;
+        }
+
         if (data) {
           const setStatus = useAppStore.getState().setApplicationStatus;
           data.forEach((app) => setStatus(app.job_id, app.status as ApplicationStatus));
         }
-      });
+      } catch (err) {
+        console.error("Failed to fetch application statuses:", err);
+      }
+    }
+    loadStatuses();
   }, [jobs]);
 
   if (!loading && jobs.length === 0) {

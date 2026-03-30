@@ -9,7 +9,7 @@ export default function MappingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetch() {
+    async function loadMappings() {
       const supabase = createClient();
       const { data } = await supabase
         .from("field_mappings")
@@ -20,25 +20,37 @@ export default function MappingsPage() {
       if (data) setMappings(data as FieldMapping[]);
       setLoading(false);
     }
-    fetch();
+    loadMappings();
   }, []);
 
   async function handleDelete(id: string) {
+    const prev = mappings;
+    setMappings((s) => s.filter((m) => m.id !== id));
+
     const supabase = createClient();
-    await supabase.from("field_mappings").delete().eq("id", id);
-    setMappings((prev) => prev.filter((m) => m.id !== id));
+    const { error } = await supabase.from("field_mappings").delete().eq("id", id);
+    if (error) setMappings(prev); // rollback on failure
   }
 
   async function toggleVerified(mapping: FieldMapping) {
-    const supabase = createClient();
     const updated = !mapping.is_verified;
-    await supabase
-      .from("field_mappings")
-      .update({ is_verified: updated })
-      .eq("id", mapping.id);
     setMappings((prev) =>
       prev.map((m) => (m.id === mapping.id ? { ...m, is_verified: updated } : m)),
     );
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("field_mappings")
+      .update({ is_verified: updated })
+      .eq("id", mapping.id);
+    if (error) {
+      // rollback
+      setMappings((prev) =>
+        prev.map((m) =>
+          m.id === mapping.id ? { ...m, is_verified: !updated } : m,
+        ),
+      );
+    }
   }
 
   if (loading) {

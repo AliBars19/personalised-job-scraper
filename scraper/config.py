@@ -13,14 +13,14 @@ load_dotenv(Path(__file__).parent / ".env")
 
 @dataclass(frozen=True)
 class SupabaseConfig:
-    url: str = os.environ.get("SUPABASE_URL", "")
-    service_key: str = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    url: str = field(default_factory=lambda: os.environ.get("SUPABASE_URL", ""))
+    service_key: str = field(default_factory=lambda: os.environ.get("SUPABASE_SERVICE_KEY", ""))
 
 
 @dataclass(frozen=True)
 class TelegramConfig:
-    bot_token: str = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    chat_id: str = os.environ.get("TELEGRAM_CHAT_ID", "")
+    bot_token: str = field(default_factory=lambda: os.environ.get("TELEGRAM_BOT_TOKEN", ""))
+    chat_id: str = field(default_factory=lambda: os.environ.get("TELEGRAM_CHAT_ID", ""))
 
     @property
     def enabled(self) -> bool:
@@ -29,8 +29,8 @@ class TelegramConfig:
 
 @dataclass(frozen=True)
 class EmailConfig:
-    resend_api_key: str = os.environ.get("RESEND_API_KEY", "")
-    recipient: str = os.environ.get("NOTIFICATION_EMAIL", "")
+    resend_api_key: str = field(default_factory=lambda: os.environ.get("RESEND_API_KEY", ""))
+    recipient: str = field(default_factory=lambda: os.environ.get("NOTIFICATION_EMAIL", ""))
 
     @property
     def enabled(self) -> bool:
@@ -67,7 +67,7 @@ SEARCH_QUERIES: dict[str, list[str]] = {
 
 # London postcode prefixes for location filtering
 LONDON_POSTCODE_PREFIXES: list[str] = [
-    "EC", "WC", "SW", "SE", "NW", "NE", "N", "E", "W",
+    "EC", "WC", "SW", "SE", "NW", "N", "E", "W",
 ]
 
 USER_AGENTS: list[str] = [

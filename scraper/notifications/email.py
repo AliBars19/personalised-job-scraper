@@ -55,7 +55,7 @@ def _build_html(jobs: list[dict[str, Any]]) -> str:
         emoji = "🏨" if job.get("category") == "hospitality" else "🍷"
         salary = job.get("salary_text") or "Salary not listed"
         source = job.get("source", "unknown")
-        url = job.get("source_url", "#")
+        url = _safe_url(job.get("source_url", "#"))
 
         cards += f"""
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:12px;">
@@ -88,3 +88,10 @@ def _esc(text: str) -> str:
         .replace(">", "&gt;")
         .replace('"', "&quot;")
     )
+
+
+def _safe_url(url: str) -> str:
+    """Sanitise URL for use in HTML href — only allow http(s) scheme."""
+    if url.startswith(("http://", "https://")):
+        return _esc(url)
+    return "#"

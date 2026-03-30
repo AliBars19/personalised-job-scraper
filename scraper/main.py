@@ -77,15 +77,9 @@ async def run_scrape(config: Config) -> None:
 
     # Run cross-source deduplication on newly scraped jobs
     logger.info("Running cross-source deduplication...")
-    all_active = db.get_active_jobs(limit=5000)
-    # Fetch full data for dedup comparison
+    all_active = db.get_all_active_for_dedup()
     for job in all_active:
-        existing = db.get_jobs_for_dedup(
-            job.get("title", ""),
-            job.get("company", ""),
-            job.get("location", ""),
-        )
-        deduplicate_job(job, existing, db)
+        deduplicate_job(job, all_active, db)
 
     # Send notifications for new jobs
     if total.jobs_new > 0:
@@ -118,17 +112,14 @@ async def run_archive(config: Config) -> None:
 
 async def _send_notifications(config: Config, db: SupabaseClient, count: int) -> None:
     """Send notifications about new jobs found."""
+    recent = db.get_active_jobs(limit=count)
+
     if config.telegram.enabled:
         from scraper.notifications.telegram import send_new_jobs_summary
-
-        # Get recently scraped jobs for the notification
-        recent = db.get_active_jobs(limit=count)
         await send_new_jobs_summary(config.telegram, recent)
 
     if config.email.enabled:
         from scraper.notifications.email import send_new_jobs_email
-
-        recent = db.get_active_jobs(limit=count)
         await send_new_jobs_email(config.email, recent)
 
 

@@ -24,33 +24,40 @@ export function StatusSelector({ jobId, currentStatus }: StatusSelectorProps) {
   async function handleChange(newStatus: ApplicationStatus) {
     if (newStatus === currentStatus) return;
 
+    const previousStatus = currentStatus;
     setApplicationStatus(jobId, newStatus);
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    // Check if application record exists
-    const { data: existing } = await supabase
-      .from("applications")
-      .select("id")
-      .eq("job_id", jobId)
-      .limit(1)
-      .single();
-
-    if (existing) {
-      await supabase
+      const { data: existing } = await supabase
         .from("applications")
-        .update({
+        .select("id")
+        .eq("job_id", jobId)
+        .limit(1)
+        .single();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("applications")
+          .update({
+            status: newStatus,
+            applied_at: newStatus === "applied" ? new Date().toISOString() : undefined,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("applications").insert({
+          job_id: jobId,
           status: newStatus,
           applied_at: newStatus === "applied" ? new Date().toISOString() : undefined,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id);
-    } else {
-      await supabase.from("applications").insert({
-        job_id: jobId,
-        status: newStatus,
-        applied_at: newStatus === "applied" ? new Date().toISOString() : undefined,
-      });
+        });
+        if (error) throw error;
+      }
+    } catch {
+      // Rollback optimistic update on failure
+      setApplicationStatus(jobId, previousStatus);
     }
   }
 

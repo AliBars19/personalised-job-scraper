@@ -24,7 +24,7 @@ export function ApplicationTracker() {
   const applicationStatuses = useAppStore((s) => s.applicationStatuses);
 
   useEffect(() => {
-    async function fetch() {
+    async function loadApplications() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("applications")
@@ -39,7 +39,7 @@ export function ApplicationTracker() {
       }
       setLoading(false);
     }
-    fetch();
+    loadApplications();
   }, []);
 
   if (loading) {

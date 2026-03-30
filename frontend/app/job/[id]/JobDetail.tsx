@@ -48,21 +48,31 @@ export function JobDetail({ job, application }: JobDetailProps) {
     }
   }, [application, job.id, applicationStatuses, setApplicationStatus]);
 
+  const [noteError, setNoteError] = useState("");
+
   async function saveNotes() {
     setSavingNotes(true);
-    const supabase = createClient();
+    setNoteError("");
 
-    if (application?.id) {
-      await supabase
-        .from("applications")
-        .update({ notes, updated_at: new Date().toISOString() })
-        .eq("id", application.id);
-    } else {
-      await supabase.from("applications").insert({
-        job_id: job.id,
-        status: "new",
-        notes,
-      });
+    try {
+      const supabase = createClient();
+
+      if (application?.id) {
+        const { error } = await supabase
+          .from("applications")
+          .update({ notes, updated_at: new Date().toISOString() })
+          .eq("id", application.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("applications").insert({
+          job_id: job.id,
+          status: "new",
+          notes,
+        });
+        if (error) throw error;
+      }
+    } catch {
+      setNoteError("Failed to save notes");
     }
 
     setSavingNotes(false);

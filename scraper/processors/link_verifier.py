@@ -52,17 +52,12 @@ async def _check_url(
                 # Rate limited — don't mark inactive, just skip
                 return True
 
-            if resp.status_code == 301:
-                final = str(resp.headers.get("location", ""))
-                # Redirect to homepage or search = listing removed
-                if final.rstrip("/") == urlparse_base(url) or "/search" in final:
-                    return False
+            # Check if redirected to homepage or search (listing removed)
+            final_url = str(resp.url)
+            if final_url.rstrip("/") == urlparse_base(url) or "/search" in final_url:
+                return False
 
             if resp.status_code == 200:
-                # For caterer.com, check redirect chain for search page
-                if source == "caterer" and "/search" in str(resp.url):
-                    return False
-
                 # Need to GET the body to check for expired text
                 get_resp = await client.get(url, follow_redirects=True, timeout=15.0)
                 body = get_resp.text.lower()
