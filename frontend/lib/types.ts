@@ -107,26 +107,35 @@ export interface ScrapeLog {
 export interface Database {
   public: {
     Tables: {
-      jobs: { Row: Job; Insert: Partial<Job>; Update: Partial<Job> };
+      jobs: {
+        Row: Job;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+      };
       applications: {
         Row: Application;
-        Insert: Partial<Application>;
-        Update: Partial<Application>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
       };
       user_profile: {
         Row: UserProfile;
-        Insert: Partial<UserProfile>;
-        Update: Partial<UserProfile>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
       };
       field_mappings: {
         Row: FieldMapping;
-        Insert: Partial<FieldMapping>;
-        Update: Partial<FieldMapping>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+      };
+      unmapped_fields: {
+        Row: Record<string, unknown>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
       };
       scrape_logs: {
         Row: ScrapeLog;
-        Insert: Partial<ScrapeLog>;
-        Update: Partial<ScrapeLog>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
       };
     };
     Views: Record<string, never>;
