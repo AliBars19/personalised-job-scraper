@@ -29,17 +29,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Ordered by priority
+# Active scrapers — sources that reliably return results from this DO IP
 SCRAPER_CLASSES = [
-    IndeedScraper,       # P0
-    ReedScraper,         # P0
-    CatererScraper,      # P0
-    TotaljobsScraper,    # P1
-    LinkedInScraper,     # P1
-    WineSearcherScraper, # P2
-    HarpersScraper,      # P2
-    HospitalityJobsScraper,  # P2
-    DrinksBusinessScraper,   # P2
+    ReedScraper,         # P0 — HTTP, ~700 jobs/run
+    LinkedInScraper,     # P1 — HTTP, ~600 jobs/run
+    # Disabled: blocked by Cloudflare/anti-bot from DO IP
+    # IndeedScraper,     # P0 — Cloudflare "Just a moment..." captcha
+    # CatererScraper,    # P0 — HTTP2 protocol error (Cloudflare)
+    # TotaljobsScraper,  # P1 — Connection timeout
+    # WineSearcherScraper, # P2 — 403 Forbidden
+    # HospitalityJobsScraper, # P2 — 403 Forbidden
+    # HarpersScraper,    # P2 — No jobs section (404)
+    # DrinksBusinessScraper, # P2 — JS-rendered, empty content
 ]
 
 
