@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CorkBoard</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        width: 280px;
+        font-family: "Inter", system-ui, sans-serif;
+        font-size: 13px;
+        color: #1e293b;
+        background: #fff;
+        padding: 16px;
+      }
+      h1 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 12px;
+      }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .dot.green { background: #22c55e; }
+      .dot.red { background: #ef4444; }
+      .dot.yellow { background: #eab308; }
+
+      .section {
+        border-top: 1px solid #f1f5f9;
+        padding-top: 10px;
+        margin-top: 10px;
+      }
+      .section h3 {
+        font-size: 11px;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+      }
+      .result-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+        font-size: 12px;
+      }
+
+      .config-section input {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      .config-section input:focus {
+        outline: none;
+        border-color: #2563eb;
+      }
+
+      button {
+        display: block;
+        width: 100%;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 6px;
+      }
+      button:hover { background: #1d4ed8; }
+      button.secondary {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      button.secondary:hover { background: #e2e8f0; }
+
+      .msg {
+        font-size: 11px;
+        color: #22c55e;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CorkBoard Auto-Fill</h1>
+
+    <!-- Connection status -->
+    <div class="status" id="status-row">
+      <span class="dot" id="status-dot"></span>
+      <span id="status-text">Checking...</span>
+    </div>
+
+    <div class="status" id="profile-row">
+      <span class="dot" id="profile-dot"></span>
+      <span id="profile-text">Profile: checking...</span>
+    </div>
+
+    <!-- Fill results (if on an application page) -->
+    <div class="section" id="results-section" style="display: none;">
+      <h3>This Page</h3>
+      <div id="results-content"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <button id="btn-fill">Auto-Fill This Page</button>
+      <button class="secondary" id="btn-dashboard"
+        onclick="window.open('${dashboardUrl}', '_blank')">
+        Open Dashboard
+      </button>
+    </div>
+
+    <!-- Config -->
+    <div class="section config-section" id="config-section">
+      <h3>Configuration</h3>
+      <input type="url" id="input-url" placeholder="Supabase URL" />
+      <input type="text" id="input-key" placeholder="Supabase Anon Key" />
+      <button id="btn-save">Save Configuration</button>
+      <div class="msg" id="save-msg"></div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

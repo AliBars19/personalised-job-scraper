@@ -1,0 +1,8 @@
+/* CorkBoard auto-fill field highlights */
+.corkboard-cv-reminder {
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  font-family: system-ui, sans-serif;
+}
