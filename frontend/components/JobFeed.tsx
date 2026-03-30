@@ -83,7 +83,12 @@ export function JobFeed() {
       }
 
       const fetched = (data ?? []) as Job[];
-      setJobs((prev) => (append ? [...prev, ...fetched] : fetched));
+      setJobs((prev) => {
+        if (!append) return fetched;
+        const seen = new Set(prev.map((j) => j.id));
+        const unique = fetched.filter((j) => !seen.has(j.id));
+        return [...prev, ...unique];
+      });
       setHasMore(fetched.length === PAGE_SIZE);
       setLoading(false);
     },
