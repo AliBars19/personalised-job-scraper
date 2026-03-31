@@ -10,6 +10,7 @@ from playwright.async_api import async_playwright
 
 from scraper.config import MAX_PAGES_PER_QUERY, SEARCH_QUERIES
 from scraper.processors.location_filter import is_london_based
+from scraper.processors.relevance_filter import is_relevant_job
 from scraper.processors.salary_parser import parse_salary
 from scraper.sources.base import BaseScraper, ScrapeResult, ScrapedJob
 
@@ -47,6 +48,9 @@ class CatererScraper(BaseScraper):
                                     result.jobs_found += 1
 
                                     if not is_london_based(job.location):
+                                        continue
+
+                                    if not is_relevant_job(job.title, job.company):
                                         continue
 
                                     if self._db.job_url_exists(job.source_url):

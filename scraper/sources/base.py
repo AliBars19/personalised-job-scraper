@@ -23,6 +23,7 @@ from scraper.config import (
 )
 from scraper.db.supabase_client import SupabaseClient
 from scraper.processors.location_filter import is_london_based
+from scraper.processors.relevance_filter import is_relevant_job
 from scraper.processors.salary_parser import parse_salary
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,9 @@ class BaseScraper(ABC):
                                 result.jobs_found += 1
 
                                 if not is_london_based(job.location):
+                                    continue
+
+                                if not is_relevant_job(job.title, job.company):
                                     continue
 
                                 if self._db.job_url_exists(job.source_url):
