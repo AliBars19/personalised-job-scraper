@@ -20,6 +20,7 @@ from scraper.config import (
     REQUEST_HEADERS,
     SEARCH_QUERIES,
     USER_AGENTS,
+    ScraperApiConfig,
 )
 from scraper.db.supabase_client import SupabaseClient
 from scraper.processors.location_filter import is_london_based
@@ -96,9 +97,11 @@ class BaseScraper(ABC):
     """Every source scraper inherits from this."""
 
     source_name: str = ""
+    use_proxy: bool = False  # Override to True for sources blocked from DO IP
 
-    def __init__(self, db: SupabaseClient) -> None:
+    def __init__(self, db: SupabaseClient, scraper_api: ScraperApiConfig | None = None) -> None:
         self._db = db
+        self._scraper_api = scraper_api
 
     # ── Abstract methods each source must implement ───────────────────
 
@@ -119,16 +122,37 @@ class BaseScraper(ABC):
     async def _delay(self) -> None:
         await asyncio.sleep(random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX))
 
+    def _should_proxy(self) -> bool:
+        """Check if this scraper should route through ScraperAPI."""
+        return self.use_proxy and self._scraper_api is not None and self._scraper_api.enabled
+
+    def _build_client_kwargs(self) -> dict[str, Any]:
+        """Build httpx.AsyncClient kwargs, adding proxy if needed."""
+        kwargs: dict[str, Any] = {
+            "headers": self._random_headers(),
+            "follow_redirects": True,
+            "timeout": 60.0 if self._should_proxy() else 30.0,
+        }
+        if self._should_proxy():
+            kwargs["proxy"] = self._scraper_api.proxy_url
+        return kwargs
+
     async def run(self) -> ScrapeResult:
         result = ScrapeResult()
         log_id = self._db.create_scrape_log(self.source_name)
 
+        if self.use_proxy and not self._should_proxy():
+            logger.warning(
+                "%s requires proxy but SCRAPER_API_KEY not configured — skipping",
+                self.source_name,
+            )
+            self._db.complete_scrape_log(
+                log_id, errors=["Proxy required but not configured"], status="failed",
+            )
+            return result
+
         try:
-            async with httpx.AsyncClient(
-                headers=self._random_headers(),
-                follow_redirects=True,
-                timeout=30.0,
-            ) as client:
+            async with httpx.AsyncClient(**self._build_client_kwargs()) as client:
                 for category, queries in SEARCH_QUERIES.items():
                     for query in queries:
                         try:
@@ -168,7 +192,7 @@ class BaseScraper(ABC):
 
                             await self._delay()
                         except Exception as exc:
-                            msg = f"[{self.source_name}] query={query!r}: {exc}"
+                            msg = f"[{self.source_name}] query={query!r}: {str(exc)[:200]}"
                             logger.error(msg)
                             result.errors.append(msg)
 

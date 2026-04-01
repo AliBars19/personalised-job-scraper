@@ -17,6 +17,7 @@ BASE_URL = "https://www.harpers.co.uk"
 
 class HarpersScraper(BaseScraper):
     source_name = "harpers"
+    use_proxy = True
 
     async def fetch_listings(
         self, query: str, category: str, client: httpx.AsyncClient

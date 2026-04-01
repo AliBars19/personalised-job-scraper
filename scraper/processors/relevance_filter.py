@@ -8,15 +8,18 @@ import re
 STRONG_TITLE_KEYWORDS = re.compile(
     r"(restaurant|hotel|hospitality|food.{0,3}beverage|f&b|f\s*&\s*b"
     r"|front.?of.?house|foh|banquet|catering|bar\s|bar.?manager"
-    r"|pub\s|pub.?manager|chef|kitchen|concierge|housekeep"
-    r"|reception(?:ist)?|sommelier|wine|cellar|vineyard|beverage"
+    r"|pub\s|pub.?manager|concierge|housekeep"
+    r"|reception(?:ist)?(?=.*hotel)|sommelier|wine|cellar|vineyard|beverage"
     r"|head.?waiter|maitre|brasserie|bistro|cafe|coffee.?shop"
     r"|cocktail|mixologist|pastry|sous.?chef|commis|porter"
     r"|night.?manager|wedding|private.?dining|members.?club"
     r"|supper.?club|tavern|inn\s|grill|steakhouse|pizz"
     r"|room.?attendant|reservations|guest.?relation|spa.?manager"
     r"|leisure.?manager|breakfast.?manager|back.?of.?house"
-    r"|lounge.?manager|floor.?manager)",
+    r"|lounge.?manager|floor.?manager|head.?chef|executive.?chef"
+    r"|rooms.?division|food.?runner|wine.?buyer|wine.?director"
+    r"|wine.?manager|wine.?consultant|wine.?merchant|wine.?bar"
+    r"|wine.?sales|wine.?trader|wine.?specialist)",
     re.IGNORECASE,
 )
 
@@ -58,7 +61,16 @@ HOSPITALITY_COMPANIES = re.compile(
     r"|firmdale|red.?carnation|dorset.?collection"
     r"|lore.?group|ennismore|lhw|leading.?hotels"
     r"|rocco.?forte|jumeirah|kempinski|belmond"
-    r"|mi[iï]ro|meliá|melia|tribe|park.?plaza)",
+    r"|mi[iï]ro|meliá|melia|tribe|park.?plaza"
+    r"|raffles|searcys|convene|locke.?hotels"
+    r"|baxterstorey|restaurant.?associates|ch.?&.?co"
+    r"|big.?mamma|black.?rock|cubitt|brindisa"
+    r"|roka|honi.?poke|pasta.?evangelists|duck.?\&.?waffle"
+    r"|humble.?grape|watchhouse|dim.?t|paesan"
+    r"|coqfighter|blacklock|sky.?garden|incipio"
+    r"|electric.?star|ardent.?pub|urban.?pubs"
+    r"|parlour.?group|everyman|flat.?iron"
+    r"|columbo.?group|la.?maritxu|madhu)",
     re.IGNORECASE,
 )
 
@@ -75,7 +87,38 @@ BLACKLISTED_TITLES = re.compile(
     r"|financial.?analyst|investment|trading|compliance.?officer"
     r"|hr.?manager|recruitment.?consultant|talent.?acquisition"
     r"|it.?manager|project.?manager|product.?manager"
-    r"|street.?works|construction|building|surveyor)",
+    r"|street.?works|construction|building|surveyor"
+    r"|audit.?(?:assistant|manager|senior)|tax.?(?:assistant|manager|senior)"
+    r"|veterinary|vet\s|dental|optician|pharmacy"
+    r"|retail.?(?:trainee|assistant|sales)(?!.*(?:hotel|wine|somm))"
+    r"|showroom.?manager|property.?manager|estate.?agent"
+    r"|student.?accommodation|lettings|mortgage"
+    r"|logistics|supply.?chain|freight|shipping"
+    r"|fashion|stylist|visual.?merchandis"
+    r"|private.?equity|hedge.?fund|asset.?manag"
+    r"|clinical|physiotherap|occupational.?therap"
+    r"|teaching|lecturer|professor|academic"
+    r"|call.?centre|contact.?centre|customer.?service(?!.*hotel)"
+    r"|insurance.?(?:broker|underwriter|claim))",
+    re.IGNORECASE,
+)
+
+# Company names that indicate NON-hospitality (false positive traps)
+BLACKLISTED_COMPANIES = re.compile(
+    r"(sony|dhl|hugo.?boss|massimo.?dutti|burberry|chanel"
+    r"|john.?lewis(?!.*restaurant)|marks.?and.?spencer(?!.*food.?hall)"
+    r"|powerleague|ogilvy|dentsu(?!.*hospitality)|wpp(?!.*hospitality)"
+    r"|bnp.?paribas|point72|goldman|jpmorgan|barclays(?!.*hospitality)"
+    r"|pegasus.?homes|homes.?for.?students"
+    r"|nhs|foundation.?trust|health.?service"
+    r"|lidl(?!.*wine)|aldi(?!.*wine)|tesco(?!.*wine)|asda(?!.*wine)"
+    r"|royal.?caribbean|celebrity.?cruises|princess.?cruises"
+    r"|carhartt|zara|primark|h\&m(?!.*hotel)"
+    r"|bof.?careers"
+    r"|molton.?brown|hims.?\&.?hers|too.?good.?to.?go"
+    r"|crystal.?palace.?fc|arsenal|chelsea.?fc|tottenham"
+    r"|gambling.?careers|nfl\b"
+    r"|welcome.?break)",
     re.IGNORECASE,
 )
 
@@ -85,10 +128,12 @@ def is_relevant_job(title: str, company: str) -> bool:
     if not title:
         return False
 
-    combined = f"{title} {company}"
-
     # Reject blacklisted titles immediately
     if BLACKLISTED_TITLES.search(title):
+        return False
+
+    # Reject blacklisted companies
+    if BLACKLISTED_COMPANIES.search(company):
         return False
 
     # Strong match — title itself contains hospitality/wine keywords

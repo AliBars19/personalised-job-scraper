@@ -102,6 +102,81 @@ class TestJunkTitles:
         assert is_relevant_job("HR Manager", "Deloitte") is False
 
 
+class TestBlacklistedCompanies:
+    def test_sony_gm(self):
+        assert is_relevant_job("General Manager", "Sony Interactive Entertainment") is False
+
+    def test_dhl_gm(self):
+        assert is_relevant_job("General Manager - London Aviation", "DHL Supply Chain") is False
+
+    def test_hugo_boss_gm(self):
+        assert is_relevant_job("General Manager (John Lewis UK)", "HUGO BOSS") is False
+
+    def test_burberry_team_manager(self):
+        assert is_relevant_job("Burberry Team Manager - Regent Street", "BoF Careers") is False
+
+    def test_nfl_events(self):
+        assert is_relevant_job("Retail Events Manager (NFL)", "GamblingCareers.com") is False
+
+    def test_powerleague_club_manager(self):
+        assert is_relevant_job("GENERAL/CLUB MANAGER", "Powerleague") is False
+
+    def test_homes_for_students(self):
+        assert is_relevant_job("General Manager - Student Accommodation", "Homes for Students") is False
+
+    def test_hims_and_hers(self):
+        assert is_relevant_job("General Manager, UK", "hims & hers") is False
+
+    def test_too_good_to_go(self):
+        assert is_relevant_job("Key Account Manager - Hospitality", "Too Good To Go") is False
+
+
+class TestBlacklistedTitles:
+    def test_audit_assistant(self):
+        assert is_relevant_job("Audit Assistant Manager", "McGinnis Loy Associates") is False
+
+    def test_tax_assistant(self):
+        assert is_relevant_job("Corporate Tax Assistant Manager", "Pro-Tax Recruitment") is False
+
+    def test_veterinary_receptionist(self):
+        assert is_relevant_job("Veterinary Receptionist", "DNA Vetcare") is False
+
+    def test_showroom_manager(self):
+        assert is_relevant_job("General Showroom Manager in waiting", "Wren Kitchens") is False
+
+    def test_property_manager(self):
+        assert is_relevant_job("Property Manager", "LAH Property Marketing") is False
+
+    def test_retail_trainee(self):
+        assert is_relevant_job("Retail Trainee Manager - Surrey", "Majestic Wine") is False
+
+    def test_logistics_manager(self):
+        assert is_relevant_job("Logistics Manager", "DHL Supply Chain") is False
+
+    def test_insurance_broker(self):
+        assert is_relevant_job("Insurance Broker Manager", "AXA") is False
+
+
+class TestWineSpecific:
+    def test_wine_director(self):
+        assert is_relevant_job("Director of Wine", "Cambridge House") is True
+
+    def test_wine_trader(self):
+        assert is_relevant_job("Senior Wine Trader", "Fluid Fusion") is True
+
+    def test_wine_consultant(self):
+        assert is_relevant_job("Wine Consultant", "Berry Bros") is True
+
+    def test_wine_buyer(self):
+        assert is_relevant_job("Fine Wine Buying Assistant", "targetjobs UK") is True
+
+    def test_wine_specialist(self):
+        assert is_relevant_job("Wine Specialist", "Jeroboams") is True
+
+    def test_beverage_manager(self):
+        assert is_relevant_job("Beverage Programme Assistant Manager", "The Birley Clubs") is True
+
+
 class TestEdgeCases:
     def test_empty_title(self):
         assert is_relevant_job("", "Hilton") is False
@@ -111,3 +186,25 @@ class TestEdgeCases:
 
     def test_pub_with_space(self):
         assert is_relevant_job("Pub Manager", "Greene King") is True
+
+    def test_receptionist_at_hotel(self):
+        # Plain "Receptionist" is too generic — we want hotel reception manager roles
+        assert is_relevant_job("Receptionist", "Rosewood London") is False
+
+    def test_hotel_receptionist(self):
+        assert is_relevant_job("Hotel Receptionist", "Clermont Hotel Group") is True
+
+    def test_reception_manager_at_hotel(self):
+        assert is_relevant_job("Reception Manager", "Hilton") is True
+
+    def test_receptionist_at_office(self):
+        assert is_relevant_job("Receptionist", "Morgan Spencer") is False
+
+    def test_receptionist_at_recruitment(self):
+        assert is_relevant_job("Corporate Receptionist & Office Coordinator", "Morgan McKinley") is False
+
+    def test_gm_at_known_restaurant(self):
+        assert is_relevant_job("General Manager", "Duck & Waffle") is True
+
+    def test_gm_at_known_pub_group(self):
+        assert is_relevant_job("General Manager", "Urban Pubs and Bars") is True

@@ -22,6 +22,7 @@ EXPIRED_PATTERNS: dict[str, list[str]] = {
     "caterer": [],  # Caterer redirects to search when listing removed
     "totaljobs": ["sorry, this job is no longer available"],
     "linkedin": ["no longer accepting applications"],
+    "adzuna": ["this job is no longer available", "expired"],
 }
 
 GENERIC_EXPIRED_PATTERNS: list[str] = [
@@ -70,7 +71,18 @@ async def _check_url(
 
     for attempt in range(MAX_RETRIES):
         try:
-            resp = await client.head(url, follow_redirects=True, timeout=15.0)
+            resp = await client.head(url, follow_redirects=False, timeout=15.0)
+
+            # Validate redirect destinations before following
+            if resp.is_redirect:
+                location = resp.headers.get("location", "")
+                if not location:
+                    return False
+                if not _is_safe_url(location):
+                    logger.warning("Blocked unsafe redirect: %s -> %s", url, location)
+                    return False
+                # Follow the redirect manually
+                resp = await client.head(location, follow_redirects=False, timeout=15.0)
 
             if resp.status_code in (404, 410):
                 return False
@@ -86,7 +98,11 @@ async def _check_url(
 
             if resp.status_code == 200:
                 # Need to GET the body to check for expired text
-                get_resp = await client.get(url, follow_redirects=True, timeout=15.0)
+                get_resp = await client.get(url, follow_redirects=False, timeout=15.0)
+                if get_resp.is_redirect:
+                    redir_loc = get_resp.headers.get("location", "")
+                    if redir_loc and _is_safe_url(redir_loc):
+                        get_resp = await client.get(redir_loc, follow_redirects=False, timeout=15.0)
                 body = get_resp.text.lower()
 
                 source_patterns = EXPIRED_PATTERNS.get(source, [])
@@ -125,7 +141,7 @@ async def verify_all_links(db: SupabaseClient) -> dict[str, int]:
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
 
-    async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
+    async with httpx.AsyncClient(headers=headers, follow_redirects=False) as client:
         offset = 0
         batch_size = 500
 

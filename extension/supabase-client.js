@@ -12,7 +12,9 @@ const CorkboardDB = {
       "supabase_url",
       "supabase_anon_key",
     ]);
-    this._url = config.supabase_url || "";
+    const rawUrl = config.supabase_url || "";
+    // Only allow Supabase cloud URLs to prevent key exfiltration
+    this._url = /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(rawUrl) ? rawUrl : "";
     this._key = config.supabase_anon_key || "";
   },
 

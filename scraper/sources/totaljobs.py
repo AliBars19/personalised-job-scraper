@@ -8,7 +8,7 @@ from urllib.parse import quote_plus, urljoin
 import httpx
 from bs4 import BeautifulSoup
 
-from scraper.config import MAX_PAGES_PER_QUERY
+from scraper.config import MAX_PAGES_PER_QUERY, MAX_PAGES_PROXY
 from scraper.sources.base import BaseScraper, ScrapedJob
 
 logger = logging.getLogger(__name__)
@@ -18,13 +18,15 @@ BASE_URL = "https://www.totaljobs.com"
 
 class TotaljobsScraper(BaseScraper):
     source_name = "totaljobs"
+    use_proxy = True
 
     async def fetch_listings(
         self, query: str, category: str, client: httpx.AsyncClient
     ) -> list[ScrapedJob]:
         jobs: list[ScrapedJob] = []
 
-        for page in range(1, MAX_PAGES_PER_QUERY + 1):
+        max_pages = MAX_PAGES_PROXY if self._should_proxy() else MAX_PAGES_PER_QUERY
+        for page in range(1, max_pages + 1):
             url = (
                 f"{BASE_URL}/jobs/{quote_plus(query.replace(' ', '-'))}"
                 f"/in-london?page={page}"

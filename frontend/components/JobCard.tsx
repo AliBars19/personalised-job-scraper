@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { safeUrl } from "@/lib/url";
+import { SOURCE_LABELS } from "@/lib/constants";
 import { StatusSelector } from "./StatusSelector";
 import type { ApplicationStatus, Job } from "@/lib/types";
 
@@ -32,18 +33,6 @@ function timeAgo(dateStr: string | null): string {
   if (days < 30) return `${days} days ago`;
   return `${Math.floor(days / 30)}mo ago`;
 }
-
-const SOURCE_LABELS: Record<string, string> = {
-  indeed: "Indeed",
-  reed: "Reed",
-  caterer: "Caterer",
-  totaljobs: "Totaljobs",
-  linkedin: "LinkedIn",
-  wine_searcher: "Wine-Searcher",
-  harpers: "Harpers",
-  hospitality_jobs_uk: "HospitalityJobs",
-  drinks_business: "Drinks Business",
-};
 
 export function JobCard({ job, status, index }: JobCardProps) {
   const { seenJobIds, markSeen } = useAppStore();

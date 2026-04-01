@@ -7,11 +7,12 @@ import asyncio
 import logging
 import sys
 
-from scraper.config import Config
+from scraper.config import ARCHIVE_AFTER_DAYS, Config
 from scraper.db.supabase_client import SupabaseClient
 from scraper.processors.deduplicator import deduplicate_job
 from scraper.processors.link_verifier import verify_all_links
 from scraper.sources.base import ScrapeResult
+from scraper.sources.adzuna import AdzunaScraper
 from scraper.sources.caterer import CatererScraper
 from scraper.sources.drinks_business import DrinksBusinessScraper
 from scraper.sources.harpers import HarpersScraper
@@ -29,29 +30,42 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Active scrapers — sources that reliably return results from this DO IP
-SCRAPER_CLASSES = [
+# Active scrapers — direct HTTP sources
+DIRECT_SCRAPERS = [
     ReedScraper,         # P0 — HTTP, ~700 jobs/run
     LinkedInScraper,     # P1 — HTTP, ~600 jobs/run
-    # Disabled: blocked by Cloudflare/anti-bot from DO IP
-    # IndeedScraper,     # P0 — Cloudflare "Just a moment..." captcha
-    # CatererScraper,    # P0 — HTTP2 protocol error (Cloudflare)
-    # TotaljobsScraper,  # P1 — Connection timeout
-    # WineSearcherScraper, # P2 — 403 Forbidden
-    # HospitalityJobsScraper, # P2 — 403 Forbidden
-    # HarpersScraper,    # P2 — No jobs section (404)
-    # DrinksBusinessScraper, # P2 — JS-rendered, empty content
+    AdzunaScraper,       # P1 — HTTP, server-rendered, good wine/hospitality coverage
 ]
 
+# Proxy scrapers — require SCRAPER_API_KEY (auto-skip if not configured)
+PROXY_SCRAPERS = [
+    IndeedScraper,         # P0 — Cloudflare, needs ScraperAPI render=true (~460 credits/run)
+    # CatererScraper,      # P0 — mostly general hospitality, already covered by Reed/LinkedIn/Adzuna
+    # TotaljobsScraper,    # P1 — low unique yield vs credit cost
+    # WineSearcherScraper, # P2 — jobs page returns 404 even with proxy
+    # HospitalityJobsScraper, # P2 — 403, low volume
+    # HarpersScraper,      # P2 — no jobs section exists
+    # DrinksBusinessScraper, # P2 — no jobs section exists
+]
 
-async def run_scrape(config: Config) -> None:
-    """Run all scrapers sequentially (staggered by design)."""
+SCRAPER_CLASSES = DIRECT_SCRAPERS + PROXY_SCRAPERS
+
+
+async def run_scrape(config: Config, sources: str = "all") -> None:
+    """Run scrapers sequentially. sources: 'all', 'direct', or 'proxy'."""
     db = SupabaseClient(config.supabase)
+
+    if sources == "direct":
+        scraper_list = DIRECT_SCRAPERS
+    elif sources == "proxy":
+        scraper_list = PROXY_SCRAPERS
+    else:
+        scraper_list = SCRAPER_CLASSES
 
     total = ScrapeResult()
 
-    for scraper_cls in SCRAPER_CLASSES:
-        scraper = scraper_cls(db)
+    for scraper_cls in scraper_list:
+        scraper = scraper_cls(db, scraper_api=config.scraper_api)
         logger.info("Starting %s scraper...", scraper.source_name)
 
         try:
@@ -107,7 +121,7 @@ async def run_archive(config: Config) -> None:
     """Archive jobs inactive for 14+ days."""
     db = SupabaseClient(config.supabase)
     logger.info("Starting archive of old inactive jobs...")
-    count = db.archive_old_inactive(days=14)
+    count = db.archive_old_inactive(days=ARCHIVE_AFTER_DAYS)
     logger.info("Archived %d old inactive jobs", count)
 
 
@@ -131,17 +145,22 @@ def main() -> None:
         choices=["scrape", "verify", "archive"],
         help="Which task to run",
     )
+    parser.add_argument(
+        "--sources",
+        choices=["all", "direct", "proxy"],
+        default="all",
+        help="Which sources to scrape: direct (free), proxy (ScraperAPI), or all",
+    )
     args = parser.parse_args()
 
     config = Config()
 
-    commands = {
-        "scrape": run_scrape,
-        "verify": run_verify,
-        "archive": run_archive,
-    }
-
-    asyncio.run(commands[args.command](config))
+    if args.command == "scrape":
+        asyncio.run(run_scrape(config, sources=args.sources))
+    elif args.command == "verify":
+        asyncio.run(run_verify(config))
+    else:
+        asyncio.run(run_archive(config))
 
 
 if __name__ == "__main__":

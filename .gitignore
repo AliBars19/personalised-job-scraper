@@ -45,4 +45,6 @@ coverage/
 # Build artifacts
 *.tsbuildinfo
 *.stackdump
+*.zip
 .pytest_cache/
+.ruff_cache/

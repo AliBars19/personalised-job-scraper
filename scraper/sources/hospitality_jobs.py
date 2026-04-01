@@ -18,6 +18,7 @@ BASE_URL = "https://www.hospitalityjobsuk.com"
 
 class HospitalityJobsScraper(BaseScraper):
     source_name = "hospitality_jobs_uk"
+    use_proxy = True
 
     async def fetch_listings(
         self, query: str, category: str, client: httpx.AsyncClient

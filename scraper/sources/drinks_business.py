@@ -17,6 +17,7 @@ BASE_URL = "https://www.thedrinksbusiness.com"
 
 class DrinksBusinessScraper(BaseScraper):
     source_name = "drinks_business"
+    use_proxy = True
 
     async def fetch_listings(
         self, query: str, category: str, client: httpx.AsyncClient

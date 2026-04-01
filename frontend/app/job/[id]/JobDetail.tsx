@@ -4,21 +4,10 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase";
 import { safeUrl } from "@/lib/url";
+import { SOURCE_LABELS } from "@/lib/constants";
 import { StatusSelector } from "@/components/StatusSelector";
 import { useAppStore } from "@/lib/store";
 import type { Application, ApplicationStatus, Job } from "@/lib/types";
-
-const SOURCE_LABELS: Record<string, string> = {
-  indeed: "Indeed",
-  reed: "Reed",
-  caterer: "Caterer",
-  totaljobs: "Totaljobs",
-  linkedin: "LinkedIn",
-  wine_searcher: "Wine-Searcher",
-  harpers: "Harpers",
-  hospitality_jobs_uk: "HospitalityJobs",
-  drinks_business: "Drinks Business",
-};
 
 const APP_TYPE_LABELS: Record<string, string> = {
   easy_apply: "Easy Apply",

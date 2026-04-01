@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from uuid import UUID
 
 from supabase import Client, create_client
 

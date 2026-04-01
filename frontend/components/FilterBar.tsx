@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppStore } from "@/lib/store";
-import type { JobCategory, JobFilters } from "@/lib/types";
+import type { JobFilters } from "@/lib/types";
 
 const CATEGORIES: { value: JobFilters["category"]; label: string }[] = [
   { value: "all", label: "All" },

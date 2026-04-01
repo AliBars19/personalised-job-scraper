@@ -62,7 +62,7 @@ Zustand store (`lib/store.ts`) holds filters, seen job IDs, and application stat
 
 Six tables: `jobs`, `applications`, `user_profile`, `field_mappings`, `unmapped_fields`, `scrape_logs`. RLS is enabled on all tables. The scraper uses the service role key (bypasses RLS); frontend and extension use the anon key.
 
-Supabase project ID: `jiciexeymynkasvdhmqf` (region: eu-west-2).
+Supabase project ID: see `.env` files (region: eu-west-2).
 
 ## Environment Variables
 

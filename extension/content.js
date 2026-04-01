@@ -36,10 +36,20 @@
     return;
   }
 
+  const ALLOWED_PROFILE_FIELDS = new Set([
+    "first_name", "last_name", "email", "phone", "address_line_1",
+    "address_line_2", "city", "postcode", "country", "linkedin_url",
+    "portfolio_url", "current_job_title", "years_experience",
+    "right_to_work", "notice_period", "expected_salary",
+    "cover_letter_template",
+  ]);
+
   const existingMappings = await CorkboardDB.getMappings(domain);
   const mappingsBySelector = {};
   for (const m of existingMappings) {
-    mappingsBySelector[m.field_selector] = m;
+    if (ALLOWED_PROFILE_FIELDS.has(m.maps_to)) {
+      mappingsBySelector[m.field_selector] = m;
+    }
   }
 
   const fields = MappingEngine.detectFields();
@@ -114,7 +124,7 @@
   for (const field of unmappedFields) {
     CorkboardDB.insertUnmappedField({
       domain,
-      page_url: window.location.href,
+      page_url: window.location.origin + window.location.pathname,
       field_selector: field.selector,
       field_type: field.type,
       field_label: field.label,

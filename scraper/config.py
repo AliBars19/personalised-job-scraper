@@ -37,6 +37,28 @@ class EmailConfig:
         return bool(self.resend_api_key and self.recipient)
 
 
+@dataclass(frozen=True)
+class ScraperApiConfig:
+    api_key: str = field(default_factory=lambda: os.environ.get("SCRAPER_API_KEY", ""))
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.api_key)
+
+    @property
+    def proxy_url(self) -> str:
+        """ScraperAPI proxy mode URL for httpx."""
+        return f"http://scraperapi:{self.api_key}@proxy-server.scraperapi.com:8001"
+
+    def api_url(self, target_url: str, render: bool = False) -> str:
+        """ScraperAPI API mode URL — wraps the target URL."""
+        from urllib.parse import quote_plus
+        base = f"http://api.scraperapi.com?api_key={self.api_key}&url={quote_plus(target_url)}"
+        if render:
+            base += "&render=true"
+        return base
+
+
 HOSPITALITY_QUERIES: list[str] = [
     "hospitality manager london",
     "hotel manager london",
@@ -58,6 +80,12 @@ WINE_QUERIES: list[str] = [
     "wine bar manager london",
     "wine consultant london",
     "cellar manager london",
+    "wine director london",
+    "wine trader london",
+    "wine specialist london",
+    "beverage manager london",
+    "assistant sommelier london",
+    "junior sommelier london",
 ]
 
 SEARCH_QUERIES: dict[str, list[str]] = {
@@ -92,12 +120,11 @@ REQUEST_HEADERS: dict[str, str] = {
 }
 
 MAX_PAGES_PER_QUERY: int = 5
+MAX_PAGES_PROXY: int = 2  # Fewer pages for proxy sources to conserve ScraperAPI credits
 REQUEST_DELAY_MIN: float = 2.0
 REQUEST_DELAY_MAX: float = 3.0
 VERIFICATION_DELAY: float = 1.0
-SOURCE_STAGGER_MINUTES: int = 5
 ARCHIVE_AFTER_DAYS: int = 14
-CONSECUTIVE_FAILURES_ALERT: int = 3
 
 
 @dataclass(frozen=True)
@@ -105,3 +132,4 @@ class Config:
     supabase: SupabaseConfig = field(default_factory=SupabaseConfig)
     telegram: TelegramConfig = field(default_factory=TelegramConfig)
     email: EmailConfig = field(default_factory=EmailConfig)
+    scraper_api: ScraperApiConfig = field(default_factory=ScraperApiConfig)
